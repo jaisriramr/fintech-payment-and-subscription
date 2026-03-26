@@ -33,3 +33,7 @@
 - Payments are simulated (no real gateway i.e Sandbox will be used)
 - System must handle recurring billing
 - Backend-only System (API Driven for now)
+
+# DB Diagram
+
+![DB Diagram](docs/db-diagram.jpg)
