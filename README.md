@@ -34,6 +34,40 @@
 - System must handle recurring billing
 - Backend-only System (API Driven for now)
 
-# DB Diagram
+## DB Diagram
 
 ![DB Diagram](docs/db-diagram.jpg)
+
+# System Design Diagram
+## First Time Payment High Level Design
+- Flow Explanation
+    - User initiates subscription request
+    - Subscription Service creates subscription (PENDING)
+    - Invoice Service creates invoice (PENDING)
+    - Payment Service creates payment (INITIATED)
+    - Payment request is pushed to queue
+    - Worker consumes queue and calls external payment gateway
+    - Payment gateway send webhook response
+    - Payment Service updates:
+        - Payment - SUCCESS/FAILES
+        - Invoice - PAID/FAILED
+        - Subscription - ACTIVE/PAST_DUE
+## Key Design Decisions
+- Invoice as source of Truth
+    - Payment is tied to invoice
+    - Subscription depends on invoice status
+- Asynchronous Processing
+    - Decouples request from execution
+    - Improves scalability and reliability
+    Uses: Amazon SQS
+## Idempotency
+- Ensures safe retries (queue + webhook)
+- Implemented using payment_id / txn_id
+## Retry & Failure Handling
+- Failed messages retried automatically
+- After max attempts -> moved to Dead Letter Queue (DLQ)
+## Webhook-Based Confirmation
+- External Payment gateway sends final status
+- System does not rely on synchronous response
+
+![First Time Payment Flow](docs/hld/First-time-payment.drawio.png)
