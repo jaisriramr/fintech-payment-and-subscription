@@ -95,50 +95,51 @@
             - FAILED -> PAST_DUE + trigger retry
  ## Key Design Decisions
  ## Invoice as Source of Truth 
-    - Payment is always tied to invoice
-    - Subscription state depends on invoice outcome
-    - Prevents inconsistencies in financial data
+- Payment is always tied to invoice
+- Subscription state depends on invoice outcome
+- Prevents inconsistencies in financial data
 
 ## Scheduled Billing (Core of Recurring System)
-    - Billing runs as a scheduler (cron-based)
-    - Pulls only due subscriptions
-    - Ensures continuous billing cycles
+- Billing runs as a scheduler (cron-based)
+- Pulls only due subscriptions
+- Ensures continuous billing cycles
 
 ## Asynchronous Processing
-    - Decouples billing from payment execution
-    - Improves scalability and fault tolerance
-    Uses: Amazon SQS
+- Decouples billing from payment execution
+- Improves scalability and fault tolerance
+Uses: Amazon SQS
 
 ## Idempotency
 ## At Billing Level
-    - Prevent duplicate invoices:
-        - (subscription_id, billing_period) must be unique
+- Prevent duplicate invoices:
+    - (subscription_id, billing_period) must be unique
 ## At Payment Level
-    - Ensures safe retries (queue + webhook)
-    - Implemented using payment_id / txn_id
+- Ensures safe retries (queue + webhook)
+- Implemented using payment_id / txn_id
 
 ## Retry & Failure Handling
-    - Failed payments are retried with backoff strategy
-        - e.g 1 hour -> 24 hours -> next cycle
-    - Messages retried automatically via queue
-    - After max attempts -> moved to Dead Letter Queue (DLQ)
+- Failed payments are retried with backoff strategy
+    - e.g 1 hour -> 24 hours -> next cycle
+- Messages retried automatically via queue
+- After max attempts -> moved to Dead Letter Queue (DLQ)
 
 ## Mandate-Based Recurring Payments
-    - Payments executed using stored mandate_id
-    - No user interaction required for recurring cycles
-    - Ensures seamless auto-debit functionally
+- Payments executed using stored mandate_id
+- No user interaction required for recurring cycles
+- Ensures seamless auto-debit functionally
 
 ## Webhook-Based Confirmation
-    - External payment gateway sends final status
-    - System does not reply on synchronous response
-    - Webhook is:
-        - Idempotent
-        - Secure (Signature Validation recommended)
-
+- External payment gateway sends final status
+- System does not reply on synchronous response
+- Webhook is:
+    - Idempotent
+    - Secure (Signature Validation recommended)
 
 ## Reliability Considerations
-    - Idempotent billing + payment processing
-    - Queue visibility timeout prevents duplicate processing
-    - DLQ for failed message isolation
-    - Batched processing for scalability
-    - Optional locking to void concurrent billing runs
+- Idempotent billing + payment processing
+- Queue visibility timeout prevents duplicate processing
+- DLQ for failed message isolation
+- Batched processing for scalability
+- Optional locking to void concurrent billing runs
+
+![Recurring Payment Flow](docs/hld/subscription-engine-high-level.drawio.png)
